@@ -1,0 +1,28 @@
+name: ENG-2374 submit state
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit whose report to update
+        required: true
+        type: string
+      state:
+        description: Expected policy state
+        default: ready
+        type: string
+jobs:
+  collect:
+    runs-on: cronos
+    steps:
+      - name: Submit explicit external collection
+        env:
+          TARGET_SHA: ${{ inputs.sha }}
+          STATE: ${{ inputs.state }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMPONENT="github.com/$REPO"
+          if [[ "$REPO" == *-monorepo ]]; then COMPONENT="$COMPONENT/services/c000"; fi
+          lunar --version
+          env -u LUNAR_COLLECT_STDOUT lunar collect --component "$COMPONENT" --sha "$TARGET_SHA" .eng2374.state "$STATE"
