@@ -1,0 +1,16 @@
+name: ENG-2374 posting burst
+run-name: ENG-2374 burst ${{ inputs.round || github.event_name }}
+on:
+  workflow_dispatch:
+    inputs:
+      round:
+        description: Burst round
+        default: smoke
+        type: string
+  pull_request:
+    paths: ["shared/**"]
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ENG-2374 workflow completion fixture"
