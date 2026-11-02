@@ -10,6 +10,14 @@ on:
         description: Expected policy state
         default: ready
         type: string
+      pr:
+        description: Pull request context, zero for branch
+        default: '0'
+        type: string
+      burst:
+        description: External collection updates before final state
+        default: '0'
+        type: string
 jobs:
   collect:
     runs-on: cronos
@@ -19,10 +27,19 @@ jobs:
           TARGET_SHA: ${{ inputs.sha }}
           STATE: ${{ inputs.state }}
           REPO: ${{ github.repository }}
+          PR: ${{ inputs.pr }}
+          BURST: ${{ inputs.burst }}
         shell: bash
         run: |
           set -euo pipefail
           COMPONENT="github.com/$REPO"
           if [[ "$REPO" == *-monorepo ]]; then COMPONENT="$COMPONENT/services/c000"; fi
-          lunar --version
-          env -u LUNAR_COLLECT_STDOUT lunar collect --component "$COMPONENT" --sha "$TARGET_SHA" .eng2374.state "$STATE"
+          lunar version
+          [[ "$BURST" =~ ^[0-9]+$ && "$BURST" -le 16 ]]
+          date -u +%FT%TZ
+          for ((n=1; n<=BURST; n++)); do
+            env -u LUNAR_COLLECT_STDOUT lunar collect --component "$COMPONENT" --sha "$TARGET_SHA" --pr "$PR" ".eng2374.events.n$n" "$n" >"/tmp/eng2374-collect-$n.log" 2>&1 &
+          done
+          wait
+          env -u LUNAR_COLLECT_STDOUT lunar collect --component "$COMPONENT" --sha "$TARGET_SHA" --pr "$PR" .eng2374.state "$STATE"
+          date -u +%FT%TZ
