@@ -1,1 +1,1 @@
-ENG-2374 code collection and report membership
+ENG-2374 code collection and report membership with component directories
