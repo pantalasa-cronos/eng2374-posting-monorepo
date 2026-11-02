@@ -1,0 +1,1 @@
+component 60, parallel report 2
